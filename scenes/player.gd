@@ -26,6 +26,9 @@ enum moveStates {
 	sliding
 }
 
+onready var ap = $AnimationPlayer
+onready var sprite = $Sprite
+
 signal movementState_changed(old_value, new_value)
 
 const UP = Vector2(0,-1)
@@ -43,9 +46,11 @@ func get_input():
 	
 	var prevMoveState = movementState
 	
-	if velocity.x == 0 and velocity.y == 0:
+	if velocity.x == 0 and is_on_floor():
 		movementState = 0
-	elif velocity.y > 0:
+		dir = 0
+	
+	if velocity.y > 0 and !is_on_floor():
 		movementState = 3
 		
 		if prevMoveState != movementState:
@@ -140,7 +145,11 @@ func get_input():
 		
 	if movementState != prevMoveState:
 		emit_signal("movementState_changed", prevMoveState, movementState)
+		toggle_animation(movementState)
 		#print("change!")
+	
+	if dir == 0:
+		sprite.flip_h = (dir == -1)
 	
 func _physics_process(delta):
 	velocity.y += delta * GRAVITY
@@ -151,11 +160,21 @@ func _physics_process(delta):
 	
 	velocity = move_and_slide(velocity, UP)
 	
-
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta):
-#	pass
+func toggle_animation(state):
+	if velocity.x == 0:
+		ap.play("idle")
+	elif movementState == 5:
+		ap.play("running")
+	elif movementState == 4:
+		ap.play("crouching")
+	elif movementState == 6:
+		ap.play("sliding")
+	elif movementState == 1:
+		ap.play("walking")
+	elif movementState == 2:
+		ap.play("jumping")
+	else:
+		ap.play("falling")
 
 
 func _on_DTT_timeout():
